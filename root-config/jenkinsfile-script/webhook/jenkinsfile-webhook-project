@@ -1,0 +1,51 @@
+@Library("Shared-Library") _
+
+pipeline {
+    agent{
+		label 'linux-node'
+	}
+    environment{
+        TOKEN_SECRET_OPEN = 'open'
+        TOKEN_SECRET_APPR = 'approve'
+        TOKEN_SECRET_TAG = 'tag'
+        NAMESERVICE = ''
+        WEBHOOK_URL = 'https://jenkins.co.id/generic-webhook-trigger/invoke'
+    }
+
+    stages {
+
+        stage('Get Repo Name'){
+            steps{
+                script{
+                    def reponame = assignWebhhook.getRepoByIdProject("${TOKEN_SECRET}", "${PROJECT_ID}")
+                    echo "${reponame}"
+                    NAMESERVICE = reponame
+                }
+            }
+        }
+
+        stage('Assign Req Merge Open') {
+            steps {
+                script{
+                    assignWebhhook.assignWebhookGit("${TOKEN_SECRET}","${PROJECT_ID}", "${WEBHOOK_URL}", "${NAMESERVICE}-${TOKEN_SECRET_OPEN}")
+                }
+            }
+        }
+
+        stage('Assign Req Merge Approve') {
+            steps {
+                script{
+                    assignWebhhook.assignWebhookGit("${TOKEN_SECRET}","${PROJECT_ID}", "${WEBHOOK_URL}", "${NAMESERVICE}-${TOKEN_SECRET_APPR}")
+                }
+            }
+        }
+
+        stage('Assign Taging') {
+            steps {
+                script{
+                    assignWebhhook.createWebhookByRepoTag("${TOKEN_SECRET}","${PROJECT_ID}", "${WEBHOOK_URL}", "${NAMESERVICE}-${TOKEN_SECRET_TAG}")
+                }
+            }
+        }
+    }
+}

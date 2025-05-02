@@ -1,0 +1,46 @@
+@Library("") _
+
+pipeline{
+    agent{
+        label 'linux-node'
+    }
+
+    environment{
+        data = ''
+
+        TOKEN_SECRET = "${SECRET_TOKEN}"
+        GROUP_ID = = "${ID_GROUP}"
+        tag = "${TOKEN_TAG}"
+
+        WEBHOOK_URL = 'https://jenkins.co.id/generic-webhook-trigger/invoke'
+    }
+
+    stages{
+        stage('Get Repo In Group'){
+            steps{
+                script{
+                    data = assignWebhookGitlab.getRepobyGroup("${TOKEN_SECRET}","${GROUP_ID}")
+                    echo "===========List Repo & ID============"
+                    echo "${data}"
+                }
+
+            }
+        }
+
+        stage('Add Webhook in Repo'){
+            steps{
+                script{
+                    def projects = data
+                    projects.each { project ->
+                        echo "Repository Name: ${project.name}, Repository ID: ${project.id}"
+                        assignWebhookGitlab.createWebhookByRepoTag("${TOKEN_SECRET}","${project.id}", "${WEBHOOK_URL}", "${tag}")
+
+                        
+                    }
+                }
+            }
+        }
+
+    }
+    
+}
